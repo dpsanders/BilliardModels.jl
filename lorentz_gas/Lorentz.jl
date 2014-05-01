@@ -37,7 +37,7 @@ end
 
 function collision_time(p::Particle, disc::Disc)
     
-    A = dot(p.v, p.v)  # 1 in principle, but varies in practice
+    #A = dot(p.v, p.v)  # 1 in principle, but varies in practice
     disp = p.x-disc.centre
     # B = dot(p.v, p.x-disc.centre)
     # C = dot(p.x-disc.centre, p.x-disc.centre) - disc.radius^2
@@ -45,13 +45,16 @@ function collision_time(p::Particle, disc::Disc)
     C = dot(disp, disp) - disc.radius^2
 
 
-    discriminant = B*B - A*C
+    #discriminant = B*B - A*C
+    discriminant = B*B - C
 
     if discriminant < 0
         return -1.
     end
     
-    return (-B - discriminant^0.5) / A  # suppose outside disc
+    #return (-B - sqrt(discriminant)) / A  # suppose outside disc
+    return -B - sqrt(discriminant)  # suppose outside disc
+
 end
 
 function normal(disc::Disc, x)
@@ -105,6 +108,9 @@ function collision(p::Particle, current_cell, boundaries, jump_directions, previ
 
         v_new = p.v - 2.0*n*dot(n, p.v)  # reflejar solo si es disco; si es plano, pasar a traves
 
+        speed = dot(v_new, v_new)
+        v_new /= speed
+
     else
         # hit plane, so periodise
         jump = jump_directions[which_hit]  
@@ -146,7 +152,19 @@ function initial_condition(radius)
     return xx, vv
 end
 
-
+function collision_time_with_disc(x, v, r)
+    B = dot(v, x);
+    C = dot(x, x) - r*r;
+    
+    discriminant = B*B - C;
+    
+    if (discriminant < 0) 
+        return -1.0;
+    
+    else 
+        return -B - sqrt(discriminant);
+    end
+end
 
 # intersection_horiz_boundary(p::Particle, y) = 
 #     (y - p.x[2]) / p.v[2]
@@ -231,15 +249,15 @@ function Lorentz_gas(radius, boundaries, jump_directions, t_final)
             p.x, p.v = x_new, v_new
 
 
-            # println(x_new[1], "\t", x_new[2], "\t", v_new[1], "\t", v_new[2])
+           # println(x_new[1], "\t", x_new[2], "\t", v_new[1], "\t", v_new[2])
 
-            # if which_hit == 1  # disc
+            if which_hit == 1  # disc
 
-            #     x_new += new_cell
+                x_new += new_cell
 
-            #     push!(xs, x_new[1])
-            #     push!(ys, x_new[2])
-            # end
+                push!(xs, x_new[1])
+                push!(ys, x_new[2])
+            end
             
         else
             collision_t = t_final - total_time
