@@ -42,7 +42,7 @@ function collision_time(p::Particle, disc::Disc)
     # B = dot(p.v, p.x-disc.centre)
     # C = dot(p.x-disc.centre, p.x-disc.centre) - disc.radius^2
     B = dot(p.v, disp)
-    C = dot(disp, disp) - disc.radius^2
+    C = dot(disp, disp) - disc.radius*disc.radius
 
 
     #discriminant = B*B - A*C
@@ -108,7 +108,7 @@ function collision(p::Particle, current_cell, boundaries, jump_directions, previ
 
         v_new = p.v - 2.0*n*dot(n, p.v)  # reflejar solo si es disco; si es plano, pasar a traves
 
-        speed = dot(v_new, v_new)
+        speed = sqrt(dot(v_new, v_new))
         v_new /= speed
 
     else
