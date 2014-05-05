@@ -15,9 +15,6 @@ export run_Lorentz_gas
 
 
 type Particle
-    # x::Vector{Float64}
-    # v::Vector{Float64}
-
     x::Vector2D
     v::Vector2D
 end
@@ -25,9 +22,6 @@ end
 Particle(x::Vector{Float64}, v::Vector{Float64}) = Particle(Vector2D(x), Vector2D(v))
 
 immutable Disc
-    # centre::Array{Float64}
-    # radius::Float64
-
     centre::Vector2D
     radius::Float64
 end
@@ -89,7 +83,7 @@ function collision(p::Particle, current_cell, boundaries, jump_directions, previ
             continue
         end
 
-        collision_t = collision_time(p, boundaries[i])
+        @inbounds collision_t = collision_time(p, boundaries[i])
 
      
         if collision_t > 0.0 && collision_t < min_collision_time
@@ -104,7 +98,7 @@ function collision(p::Particle, current_cell, boundaries, jump_directions, previ
     @assert which_hit > 0
     
     if which_hit == 1  # reflect off disc
-        n = normal(boundaries[1], x_new) 
+        @inbounds n = normal(boundaries[1], x_new) 
 
         v_new = p.v - 2.0*n*dot(n, p.v)  # reflejar solo si es disco; si es plano, pasar a traves
 
@@ -113,7 +107,7 @@ function collision(p::Particle, current_cell, boundaries, jump_directions, previ
 
     else
         # hit plane, so periodise
-        jump = jump_directions[which_hit]  
+        @inbounds jump = jump_directions[which_hit]  
         # print "jump = ", jump
 
         new_cell += jump
@@ -152,6 +146,8 @@ function initial_condition(radius)
     return xx, vv
 end
 
+
+# fast version:
 function collision_time_with_disc(x, v, r)
     B = dot(v, x);
     C = dot(x, x) - r*r;
@@ -166,29 +162,89 @@ function collision_time_with_disc(x, v, r)
     end
 end
 
-# intersection_horiz_boundary(p::Particle, y) = 
-#     (y - p.x[2]) / p.v[2]
+intersection_horiz_boundary(xx, vv, y) = 
+    @inbounds return (y - xx[2]) / vv[2]
 
-# intersection_vert_boundary(p::Particle, x) = 
-#     (x - p.x[1]) / p.v[1]
+intersection_vert_boundary(xx, vv, x) = 
+    @inbounds return (x - xx[1]) / vv[1]
 
-# function find_collision()
-#     min_collision_time = 1000.
 
-#     collision_times = 
-#         [   collision_time_with_disc(p),
-#             intersection_vert_boundary(-0.5),
-#             intersection_horiz_boundary(0.5),
-#             intersection_vert_boundary(0.5),
-#             intersection_horiz_boundary(-0.5)
-#         ]
+function new_collision(xx, vv, r, cell, previous_hit)
+    
+    min_collision_time = 1000.0
 
-#     for i in 1:5  # num of collision times
-#         coll_time = collision_times[i]
-#         min_collision_time = coll_time
-#         object_hit = i
-#     end
-       
+    collision_times = 
+        ( collision_time_with_disc(xx, vv, r),
+            intersection_vert_boundary(xx, vv, -0.5),
+            intersection_horiz_boundary(xx, vv, 0.5),
+            intersection_vert_boundary(xx, vv, 0.5),
+            intersection_horiz_boundary(xx, vv, -0.5)
+        )
+
+    object_hit = -1
+
+    for i in 1:5  # num of collision times
+
+        if i==previous_hit
+            continue
+        end
+
+        @inbounds coll_time = collision_times[i]
+        
+        if coll_time > 0.0 && coll_time < min_collision_time
+
+            min_collision_time = coll_time
+            object_hit = i
+        end
+    end
+
+    #@assert object_hit > 0
+
+    #println(min_collision_time)
+
+    xx += vv*min_collision_time
+
+    @inbounds begin
+        x, y = xx[1], xx[2]
+        x_cell, y_cell = cell[1], cell[2]
+    end
+
+    if object_hit == 1
+        n = xx / r  # vector normal
+
+        vv -= 2. * dot(vv, n) * n
+        speed = sqrt(dot(vv, vv))
+        vv /= speed
+
+    elseif object_hit == 2
+        x = 0.5
+        x_cell -= 1
+        object_hit = 4
+
+    elseif object_hit == 3
+        y = -0.5
+        y_cell += 1
+        object_hit = 5
+
+    elseif object_hit == 4
+        x = -0.5
+        x_cell += 1
+        object_hit = 2
+
+    elseif object_hit == 5
+        y = 0.5
+        y_cell -= 1
+        object_hit = 3
+    end
+
+    cell = Vector2D(x_cell, y_cell)
+    xx = Vector2D(x, y)
+
+    return xx, vv, cell, min_collision_time, object_hit
+
+
+end
+
 
 
 
@@ -239,8 +295,10 @@ function Lorentz_gas(radius, boundaries, jump_directions, t_final)
 
     while total_time < t_final
         x_new, v_new, new_cell, collision_t, which_hit = 
-            collision(p, current_cell, boundaries, 
-                    jump_directions, which_hit)
+            #collision(p, current_cell, boundaries, 
+            #        jump_directions, which_hit)
+        new_collision(p.x, p.v, radius, current_cell, which_hit)
+        
         
         if total_time + collision_t < t_final
             total_time += collision_t
@@ -249,15 +307,15 @@ function Lorentz_gas(radius, boundaries, jump_directions, t_final)
             p.x, p.v = x_new, v_new
 
 
-           # println(x_new[1], "\t", x_new[2], "\t", v_new[1], "\t", v_new[2])
+            #println(x_new[1], "\t", x_new[2], "\t", v_new[1], "\t", v_new[2])
 
-            if which_hit == 1  # disc
+            # if which_hit == 1  # disc
 
-                x_new += new_cell
+            #     x_new += new_cell
 
-                push!(xs, x_new[1])
-                push!(ys, x_new[2])
-            end
+            #     push!(xs, x_new[1])
+            #     push!(ys, x_new[2])
+            # end
             
         else
             collision_t = t_final - total_time
