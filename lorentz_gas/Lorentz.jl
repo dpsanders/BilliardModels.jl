@@ -292,14 +292,38 @@ function Lorentz_gas(radius, boundaries, jump_directions, t_final)
     ys = [x0[2]]
 
     which_hit = -1
+    time_since_disc_collision = 0.0
+    disc_collision_times = Float64[]
 
+    output_time = 10.
+    next_output_time = output_time
+    num_data = int(t_final / output_time)
+    step = 1
+    
     while total_time < t_final
         x_new, v_new, new_cell, collision_t, which_hit = 
             #collision(p, current_cell, boundaries, 
             #        jump_directions, which_hit)
         new_collision(p.x, p.v, radius, current_cell, which_hit)
-        
-        
+
+        next_time = total_time + collision_t
+
+        #println("next_time = ", next_time, "; next_output_time = ", next_output_time)
+
+        while (next_time > next_output_time)
+            # not necessary to use a while 
+
+            new_position = p.x + (next_output_time - total_time) * p.v
+            new_position += new_cell
+
+            println(next_output_time, "\t", new_position[1], "\t", new_position[2])
+
+            next_output_time += output_time
+        end
+
+        step += 1
+        total_time = next_time
+
         if total_time + collision_t < t_final
             total_time += collision_t
             current_cell = new_cell
@@ -309,13 +333,19 @@ function Lorentz_gas(radius, boundaries, jump_directions, t_final)
 
             #println(x_new[1], "\t", x_new[2], "\t", v_new[1], "\t", v_new[2])
 
-            # if which_hit == 1  # disc
+            time_since_disc_collision += collision_t
 
-            #     x_new += new_cell
+            if which_hit == 1  # disc
 
-            #     push!(xs, x_new[1])
-            #     push!(ys, x_new[2])
-            # end
+                x_new += new_cell
+
+                push!(xs, x_new[1])
+                push!(ys, x_new[2])
+
+                push!(disc_collision_times, time_since_disc_collision)
+                time_since_disc_collision = 0.0
+            end
+
             
         else
             collision_t = t_final - total_time
@@ -333,7 +363,7 @@ function Lorentz_gas(radius, boundaries, jump_directions, t_final)
         
     end
 
-    return xs, ys
+    return xs, ys, disc_collision_times
 end
 
 
