@@ -5,6 +5,7 @@ using Vector2d
 #import Base.convert
 
 export run_Lorentz_gas
+export run_many_particles
 
 
 # typealias Vector2D Vector2{Float64}
@@ -297,10 +298,18 @@ function Lorentz_gas(radius, boundaries, jump_directions, t_final)
 
     output_time = 10.
     next_output_time = output_time
-    num_data = int(t_final / output_time)
-    step = 1
+    num_data = int(round(t_final / output_time))
+
+    println("num_data = ", num_data)
+
+
+    step = 0
+
+    positions = [x0]
+    times = [0.0]
     
-    while total_time < t_final
+    #while total_time <= t_final
+    while step <= num_data+1
         x_new, v_new, new_cell, collision_t, which_hit = 
             #collision(p, current_cell, boundaries, 
             #        jump_directions, which_hit)
@@ -310,18 +319,31 @@ function Lorentz_gas(radius, boundaries, jump_directions, t_final)
 
         #println("next_time = ", next_time, "; next_output_time = ", next_output_time)
 
-        while (next_time > next_output_time)
+        #while (next_time > next_output_time)
+        if (next_time >= next_output_time)
             # not necessary to use a while 
 
             new_position = p.x + (next_output_time - total_time) * p.v
             new_position += new_cell
 
-            println(next_output_time, "\t", new_position[1], "\t", new_position[2])
+            #println(next_output_time, "\t", new_position[1], "\t", new_position[2])
+
+          
+
+            push!(positions, new_position)
+            push!(times, next_output_time)
 
             next_output_time += output_time
+            step += 1
+
+            if step == num_data
+                break
+            end
+
+
         end
 
-        step += 1
+        
         total_time = next_time
 
         if total_time + collision_t < t_final
@@ -363,9 +385,34 @@ function Lorentz_gas(radius, boundaries, jump_directions, t_final)
         
     end
 
-    return xs, ys, disc_collision_times
+    return xs, ys, disc_collision_times, times, positions
 end
 
+function many_particles(N, radius, boundaries, jump_directions, t_final)
+
+    xs, ys, disc_collision_times, times, positions = Lorentz_gas(radius, boundaries, jump_directions, t_final)
+
+ println("times = ", times)
+    println(length(positions))
+
+    all_positions = { { positions[i] } for i in 1:length(positions) }
+
+
+    for n in 1:N-1
+        xs, ys, disc_collision_times, times, positions = Lorentz_gas(radius, boundaries, jump_directions, t_final)
+
+         println("times = ", times)
+    println("all_positions = ", all_positions)
+    println(length(positions))
+    println(length(all_positions))
+
+        for i in 1:length(positions)
+            push!(all_positions[i], positions[i])
+        end
+    end
+
+    all_positions
+end
 
 # function continuous_time_trajectory()
 
@@ -436,6 +483,15 @@ function run_Lorentz_gas(radius, max_time)
     @time xs, ys = Lorentz_gas(radius, boundaries, jump_directions, max_time)
 end
 
+
+function run_many_particles(N, radius, max_time)
+
+    println("# Using radius: ", radius)
+    println("# Using $N particles")
+
+    boundaries, jump_directions = make_boundaries(radius)
+    @time all_positions = many_particles(N, radius, boundaries, jump_directions, max_time)
+end
 
 if length(ARGS) > 1
     radius = float(ARGS[1])
