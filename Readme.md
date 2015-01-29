@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/dpsanders/BilliardModels.svg?branch=billiard_model)](https://travis-ci.org/dpsanders/BilliardModels)
+[![Build Status](https://travis-ci.org/dpsanders/BilliardModels.jl.svg?branch=master)](https://travis-ci.org/dpsanders/BilliardModels.jl)
 
 # BilliardModels.jl
 
