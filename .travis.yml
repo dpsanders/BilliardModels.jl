@@ -14,5 +14,7 @@ script:
   - julia tests/test_Vector2D.jl
 
 
+notifications:
+  email: false
 
 
