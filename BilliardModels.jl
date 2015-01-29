@@ -313,10 +313,10 @@ function run_many_particles(N, radius, max_time)
     @time all_positions = many_particles(N, radius, obstacles, jump_directions, max_time)
 end
 
-if length(ARGS) > 1
-    radius = float(ARGS[1])
-    run_Lorentz_gas(radius)
-end
+# if length(ARGS) > 1
+#     radius = float(ARGS[1])
+#     run_Lorentz_gas(radius)
+# end
 
 
 # using PyPlot

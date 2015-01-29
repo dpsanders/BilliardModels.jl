@@ -16,6 +16,8 @@ Vector2D{T}(v::Array{T,1}) = Vector2D(v[1], v[2])
 *(lamb::Number, v::Vector2D) = v*lamb
 /(v::Vector2D, lamb::Number) = Vector2D(v.x/lamb, v.y/lamb)
 
+==(v::Vector2D, w::Vector2D) = v.x==w.x && v.y==w.y
+
 dot(v::Vector2D, w::Vector2D) = v.x*w.x + v.y*w.y
 
 norm(v::Vector2D) = √(v ⋅ v)

@@ -1,1 +1,1 @@
-julia tests/runtests.jl
+julia test/runtests.jl

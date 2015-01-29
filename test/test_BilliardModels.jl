@@ -1,9 +1,8 @@
 using FactCheck
 
-push!(LOAD_PATH, "/Users/dsanders/Dropbox/papers/billiards/lorentz_gas/")
-#println(LOAD_PATH)
+push!(LOAD_PATH, "/Users/dsanders/Dropbox/papers/billiards/")
 
-using Lorentz
+using BilliardModels
 using Vector2d
 
 facts("Particle tests") do

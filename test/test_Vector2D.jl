@@ -1,6 +1,6 @@
 using FactCheck
 
-push!(LOAD_PATH, "/Users/dsanders/Dropbox/papers/billiards/lorentz_gas/")
+push!(LOAD_PATH, "/Users/dsanders/Dropbox/papers/billiards/")
 #println(LOAD_PATH)
 
 using Vector2d
