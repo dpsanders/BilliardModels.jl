@@ -3,7 +3,12 @@ julia:
   - release
   - nightly
 
+before_install:
+  - julia -e 'Pkg.init(); Pkg.add("FactCheck")'
+
+
 install:
+
 
 script:
   - julia tests/test_Vector2D.jl
