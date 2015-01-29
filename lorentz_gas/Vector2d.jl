@@ -1,14 +1,14 @@
 module Vector2d
 
 importall Base
-export Vector2D, convert
+export Vector2D, convert, dot, getindex
 
-immutable Vector2D
-	x::Float64
-	y::Float64
+immutable Vector2D{T}
+	x::T
+	y::T
 end
 
-#Vector2D(v::Vector{Float64}) = Vector2D(v[1], v[2])
+Vector2D{T}(v::Array{T,1}) = Vector2D(v[1], v[2])
 
 +(v::Vector2D, w::Vector2D) = Vector2D(v.x+w.x, v.y+w.y)
 -(v::Vector2D, w::Vector2D) = Vector2D(v.x-w.x, v.y-w.y)
@@ -18,7 +18,7 @@ end
 
 dot(v::Vector2D, w::Vector2D) = v.x*w.x + v.y*w.y
 
-convert(::Type{Vector2D}, v::Array{Float64, 1}) = Vector2D(v[1], v[2])
+convert{T}(::Type{Vector2D}, v::Array{T, 1}) = Vector2D(v[1], v[2])
 
 getindex(v::Vector2D, i) = (i==1) ? v.x : v.y
 
