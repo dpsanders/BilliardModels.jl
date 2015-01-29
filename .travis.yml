@@ -11,7 +11,7 @@ install:
 
 
 script:
-  - julia test/test_Vector2D.jl
+  - julia test/runtests.jl
 
 
 notifications:
