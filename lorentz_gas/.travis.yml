@@ -1,0 +1,13 @@
+language: julia
+julia:
+  - release
+  - nightly
+
+install:
+
+script:
+  - julia tests/test_Vector2D.jl
+
+
+
+
