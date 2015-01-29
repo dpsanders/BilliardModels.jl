@@ -1,20 +1,17 @@
+
 module Lorentz
 
-
-#using Docile
 using Vector2d
+using Docile
+
+
 #using ImmutableArrays
 #import Base.convert
 
 export run_Lorentz_gas
 export run_many_particles
 
-export Particle, Disc, collision_time
-
-
-# typealias Vector2D Vector2{Float64}
-# convert(::Type{Vector2{Float64}}, v::Array{Float64, 1}) =
-#     Vector2{Float64}(v[1], v[2])
+export Particle, Disc, collision_time, Plane
 
 
 type Particle
@@ -28,7 +25,7 @@ immutable Disc
     radius::Float64
 end
 
-@doc """Compute time of collision of a particle and a disc,
+@doc """Compute *time of collision* of a particle and a disc,
         assuming the particle starts outside the disc and the
         particle speed is one (using the quadratic formula).
 
@@ -47,13 +44,12 @@ function collision_time(p::Particle, disc::Disc)
         return -1.
     end
 
-    #return (-B - sqrt(discriminant)) / A  # suppose outside disc
-    return -B - sqrt(discriminant)  # suppose outside disc
+    return -B - sqrt(discriminant)  # NB: this supposes that the particle is *outside* the disc
 
 end
 
+@doc """Compute normal vector to disc boundary, at a point x that must lie *on the boundary*""" ->
 function normal(disc::Disc, x)
-    # normal to disc at point x *on boundary*
     return (x - disc.centre) / disc.radius
 end
 
