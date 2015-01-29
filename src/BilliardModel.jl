@@ -12,7 +12,7 @@ using Docile
 
 export Particle, Disc, collision_time, Plane, BilliardTable
 export Sinai_billiard
-export calculate_next_collision, billiard_dynamics
+export calculate_next_collision, billiard_dynamics, initial_condition
 
 Vector2D
 
@@ -57,6 +57,9 @@ function normal(disc::Disc, x)
     return (x - disc.centre) / disc.radius
 end
 
+@doc """Check whether a given position is inside a disc.""" ->
+isvalid(x, disc::Disc) = norm(x - disc.centre) > disc.radius  # must change if
+
 
 immutable Plane <: Obstacle
     c::Vector2D  # an aribtrary point on the plane
@@ -69,9 +72,22 @@ collision_time(p::Particle, plane::Plane) =
 
 normal(plane::Plane, x) = plane.normal  # same normal vector for all positions x on plane
 
+@doc """Convention: the normal points to the allowed part of the billiard tabl""" ->
+isvalid(x, plane::Plane) = dot(x - plane.c, plane.normal) > 0.0
+
 
 type BilliardTable
   obstacles::Vector{Obstacle}
+end
+
+function isvalid(x, table::BilliardTable)
+    for obstacle in table.obstacles
+        if !isvalid(x, obstacle)
+            return false
+        end
+    end
+
+    true
 end
 
 
@@ -127,15 +143,15 @@ end
 #     end
 
 
-
-function initial_condition(radius)
-
-    x, y = 0.0, 0.0
+# design so that the normal vector points into the allowed region!
+function initial_condition(table, xmin, xmax, ymin, ymax)
+    x, y = xmin, ymin
 
     while true
-        x, y = rand(2) .- 0.5
+        x = xmin + rand()*(xmax-xmin)
+        y = ymin + rand()*(ymax-ymin)
 
-        if (x*x + y*y) >= radius^2
+        if isvalid(Vector2D(x,y), table)  # valid if outside all discs
             break
         end
     end
@@ -160,10 +176,10 @@ function Sinai_billiard(radius)
 
     push!(obstacles, Disc([0., 0.], radius) )
 
-    push!(obstacles, Plane([-0.5, -0.5], [0., -1.]) )
-    push!(obstacles, Plane([0.5, -0.5], [1., 0.]) )
-    push!(obstacles, Plane([0.5, 0.5], [0., 1.]) )
-    push!(obstacles, Plane([-0.5, 0.5], [-1., 0.]) )
+    push!(obstacles, Plane([-0.5, -0.5], [0., 1.]) )
+    push!(obstacles, Plane([0.5, -0.5], [-1., 0.]) )
+    push!(obstacles, Plane([0.5, 0.5], [0., -1.]) )
+    push!(obstacles, Plane([-0.5, 0.5], [1., 0.]) )
 
     return BilliardTable(obstacles)
 end
