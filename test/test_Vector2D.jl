@@ -1,9 +1,9 @@
 using FactCheck
 
-push!(LOAD_PATH, "/Users/dsanders/Dropbox/papers/billiards/")
+#push!(LOAD_PATH, "/Users/dsanders/Dropbox/papers/billiards/")
 #println(LOAD_PATH)
 
-using Vector2d
+using BilliardModels
 
 facts("Vector2D tests") do
     @fact Vector2D(1, 2) => Vector2D{Int}(1, 2)

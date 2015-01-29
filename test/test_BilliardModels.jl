@@ -1,9 +1,9 @@
 using FactCheck
 
-push!(LOAD_PATH, "/Users/dsanders/Dropbox/papers/billiards/")
+#push!(LOAD_PATH, "/Users/dsanders/Dropbox/papers/billiards/")
 
 using BilliardModels
-using Vector2d
+#using Vector2d
 
 facts("Particle tests") do
 

@@ -1,4 +1,4 @@
-module Vector2d
+#module Vector2d
 
 importall Base
 export Vector2D, convert, dot, getindex
@@ -26,4 +26,4 @@ convert{T}(::Type{Vector2D}, v::Array{T, 1}) = Vector2D(v[1], v[2])
 
 getindex(v::Vector2D, i) = (i==1) ? v.x : v.y
 
-end
+#end
