@@ -1,22 +1,22 @@
 using PyPlot
 using PyCall
 using BilliardModels
-using Vector2d
 
 @pyimport matplotlib.patches as patches
 
+import PyPlot.draw
+export draw
 
+function draw(d::Disc, subplot)
 
-function visualize!(d::Disc, subplot)
-
-    circ = patches.Circle((d.centre.x, d.centre.y), d.radius)
+    circ = patches.Circle((d.centre.x, d.centre.y), d.radius, alpha=0.5)
     subplot[:add_patch](circ)
 end
 
-function visualize!(p::Plane, subplot)
+function draw(p::Plane, subplot)
 end
 
-function visualize!(table::BilliardTable, subplot)
+function draw(table::BilliardTable, subplot)
 
     xmax, xmin = -Inf, Inf
     ymax, ymin = -Inf, Inf
@@ -28,19 +28,19 @@ function visualize!(table::BilliardTable, subplot)
             ymin = min(ymin, obstacle.c.y)
             ymax = max(ymax, obstacle.c.y)
         else
-            visualize!(obstacle, subplot)
+            draw(obstacle, subplot)
         end
     end
-    
+
     subplot[:plot]([xmin,xmax,xmax,xmin,xmin],
                  [ymin,ymin,ymax,ymax,ymin],"-k",lw=2)
 end
 
-function visualize!{T}(xs::Array{Vector2D{T},1}, subplot)
+function draw{T}(xs::Array{Vector2D{T},1}, subplot)
 
     x = [pt.x for pt in xs]
     y = [pt.y for pt in xs]
-    subplot[:plot](x, y, "-")
+    subplot[:plot](x, y, "-", alpha=0.5)
     axes[:axis]("image")
 
 end
