@@ -1,0 +1,20 @@
+language: julia
+julia:
+  - release
+  - nightly
+
+before_install:
+  - julia -e 'Pkg.init(); Pkg.add("FactCheck")'
+
+
+install:
+
+
+script:
+  - julia test/test_Vector2D.jl
+
+
+notifications:
+  email: false
+
+
