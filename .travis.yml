@@ -1,4 +1,5 @@
 language: julia
+
 julia:
   - release
   - nightly
@@ -6,15 +7,11 @@ julia:
 before_install:
   - julia -e 'Pkg.init(); Pkg.add("FactCheck")'
 
-
 install:
-
 
 script:
   - julia test/runtests.jl
 
-
 notifications:
   email: false
-
 
