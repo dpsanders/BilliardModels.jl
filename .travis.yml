@@ -5,7 +5,7 @@ julia:
   - nightly
 
 before_install:
-  - julia -e 'Pkg.init(); Pkg.add("FactCheck")'
+  - julia -e 'Pkg.init(); Pkg.add("FactCheck"); Pkg.add("Docile")'
 
 
 notifications:
