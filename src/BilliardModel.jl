@@ -1,21 +1,12 @@
 
-#module BilliardModels
-
-#include("Vector2d.jl")
-
-#using Vector2d
-using Docile
-using BilliardModels
-
-#export run_Lorentz_gas
-#export run_many_particles
-
 export Particle, Disc, collision_time, Plane, BilliardTable, AbstractPlane, AbstractParticle
 export Sinai_billiard
 export calculate_next_collision, billiard_dynamics, initial_condition
 
 # lattice stuff:
 export ParticleOnLattice, CellBoundary, billiard_dynamics_on_lattice
+
+# particle types:
 
 abstract AbstractParticle
 
@@ -30,6 +21,7 @@ type ParticleOnLattice <: AbstractParticle
     lattice_vector::Vector2D{Int}
 end
 
+# obstacle types:
 
 abstract Obstacle
 
@@ -45,9 +37,14 @@ immutable Plane <: AbstractPlane
     normal::Vector2D
 end
 
-@doc """A CellBoundary is a boundary between parts of a lattice.
+@doc """A `CellBoundary` is a boundary between parts of a lattice.
         It is assumed to be planar.  The constructor creates an incomplete
-        object, so the other_side must be added afterward.""" ->
+        object, so the `other_side` field must be added later
+        (once the corresponding `CellBoundary` on the other side of the next cell has been constructed).
+
+        `lattice_increment` is a vector which says which new lattice cell a particle enters when it crosses this
+        `CellBoundary`.
+        """ ->
 type CellBoundary <: AbstractPlane
     c::Vector2D
     normal::Vector2D
@@ -57,8 +54,23 @@ type CellBoundary <: AbstractPlane
     CellBoundary(c,normal,lattice_increment) = new(c,normal,lattice_increment)
 end
 
-get_lattice_increment(o::Obstacle) = [0, 0]
+
+# BilliardTable type.
+
+@doc """A `BilliardTable` is currently just a list of obstacles.""" ->
+type BilliardTable
+  obstacles::Vector{Obstacle}
+end
+
+
+
+@doc """`get_lattice_increment` returns the lattice_increment of an obstacle. This is a zero vector
+except for `CellBoundary`s.""" ->
+
+get_lattice_increment(o::Obstacle) = [0, 0]  # non-boundary obstacles do not change the lattice cell
 get_lattice_increment(o::CellBoundary) = o.lattice_increment
+
+
 
 @doc """Compute *time of collision* of a particle and a disc,
         assuming the particle starts outside the disc and the
@@ -101,10 +113,6 @@ normal(plane::AbstractPlane, x) = plane.normal  # same normal vector for all pos
 isvalid(x, plane::AbstractPlane) = dot(x - plane.c, plane.normal) > 0.0
 
 
-type BilliardTable
-  obstacles::Vector{Obstacle}
-end
-
 function isvalid(x, table::BilliardTable)
     for obstacle in table.obstacles
         if !isvalid(x, obstacle)
@@ -142,25 +150,6 @@ function calculate_next_collision_on_lattice(p::ParticleOnLattice, billiard_tabl
     return x_new, v_new, first_collision_time, which_obstacle_hit, lattice_increment
 end
 
-function collide(x_collision, v, obstacle::Obstacle)
-    n = normal(obstacle, x_collision)
-
-    v_new = v - 2.0*dot(n,v)*n  # reflejar solo si es disco; si es plano, pasar a traves
-
-    speed = norm(v_new)
-    v_new /= speed
-    return x_collision, v_new, obstacle
-end
-
-@doc """This function assumes that the distance between opposite
-        CellBoundary objects is 1 and the normal is a unit normal
-        pointing inwards.""" ->
-function collide(x_collision, v, boundary::CellBoundary)
-
-    x_new = x_collision + boundary.normal
-
-    return x_new, v, boundary.other_side
-end
 
 function calculate_next_collision(p::Particle, billiard_table, previous_obstacle_hit)
 
@@ -186,15 +175,29 @@ function calculate_next_collision(p::Particle, billiard_table, previous_obstacle
     return x_collision, v_new, first_collision_time, which_obstacle_hit
 end
 
-function post_collision_velocity(x_collision, v, obstacle)
+
+function collide(x_collision, v, obstacle::Obstacle)
     n = normal(obstacle, x_collision)
 
     v_new = v - 2.0*dot(n,v)*n  # reflejar solo si es disco; si es plano, pasar a traves
 
     speed = norm(v_new)
     v_new /= speed
-    v_new
+    return x_collision, v_new, obstacle
 end
+
+
+@doc """This function assumes that the distance between opposite
+        CellBoundary objects is 1 and the normal is a unit normal
+        pointing inwards (i.e. towards the available space on the billiard table).""" ->
+function collide(x_collision, v, boundary::CellBoundary)
+
+    x_new = x_collision + boundary.normal
+
+    return x_new, v, boundary.other_side
+end
+
+
 
 
 # design so that the normal vector points into the allowed region!
