@@ -3,7 +3,7 @@ export Particle, Disc, collision_time, Plane, BilliardTable, AbstractPlane, Abst
 export Sinai_billiard
 export calculate_next_collision, billiard_dynamics, initial_condition
 
-# lattice stuff:
+# exports of lattice functionality:
 export ParticleOnLattice, CellBoundary, billiard_dynamics_on_lattice
 
 # particle types:
@@ -101,7 +101,8 @@ function normal(disc::Disc, x)
 end
 
 @doc """Check whether a given position is inside a disc.""" ->
-isvalid(x, disc::Disc) = norm(x - disc.centre) > disc.radius  # must change if
+isoutside(x, disc::Disc) = norm(x - disc.centre) > disc.radius  # must change if
+
 
 
 collision_time(p::AbstractParticle, plane::AbstractPlane) =
@@ -109,13 +110,14 @@ collision_time(p::AbstractParticle, plane::AbstractPlane) =
 
 normal(plane::AbstractPlane, x) = plane.normal  # same normal vector for all positions x on plane
 
-@doc """Convention: the normal points to the allowed part of the billiard tabl""" ->
-isvalid(x, plane::AbstractPlane) = dot(x - plane.c, plane.normal) > 0.0
+@doc """Convention: the normal points towards the allowed part of the billiard table""" ->
+isoutside(x, plane::AbstractPlane) = dot(x - plane.c, plane.normal) > 0.0
 
-
-function isvalid(x, table::BilliardTable)
+@doc """`isoutside` finds if the particle is in the allowed part of the billiard table,
+i.e. is "outside" the billiard obstacles.""" ->
+function isoutside(x, table::BilliardTable)
     for obstacle in table.obstacles
-        if !isvalid(x, obstacle)
+        if !isoutside(x, obstacle)
             return false
         end
     end
@@ -123,7 +125,8 @@ function isvalid(x, table::BilliardTable)
     true
 end
 
-
+@doc """The two versions of `calculate_next_collision` return the information of what
+the result is of doing the next collision, *without* updating the particle.""" ->
 function calculate_next_collision_on_lattice(p::ParticleOnLattice, billiard_table, previous_obstacle_hit)
 
     obstacles = billiard_table.obstacles
@@ -176,18 +179,19 @@ function calculate_next_collision(p::Particle, billiard_table, previous_obstacle
 end
 
 
+@doc """`collide` *implements* an elastic collision""" ->
 function collide(x_collision, v, obstacle::Obstacle)
     n = normal(obstacle, x_collision)
 
     v_new = v - 2.0*dot(n,v)*n  # reflejar solo si es disco; si es plano, pasar a traves
-
-    speed = norm(v_new)
-    v_new /= speed
+    v_new /= norm(v_new)
     return x_collision, v_new, obstacle
 end
 
 
-@doc """This function assumes that the distance between opposite
+@doc """This version of `collide` implements a "collision" with a `CellBoundary`.
+        This just moves the particle to the opposite boundary (updating its position).
+        This assumes that the distance between opposite
         CellBoundary objects is 1 and the normal is a unit normal
         pointing inwards (i.e. towards the available space on the billiard table).""" ->
 function collide(x_collision, v, boundary::CellBoundary)
@@ -197,10 +201,9 @@ function collide(x_collision, v, boundary::CellBoundary)
     return x_new, v, boundary.other_side
 end
 
-
-
-
-# design so that the normal vector points into the allowed region!
+@doc """Generate an initial condition in the allowed region of the billiard table
+("outside") the billiard obstacles. Here, "outside" for a plane is taken to mean that
+the allowed region lies *in the direction of the plane's normal vector*.""" ->
 function initial_condition(table, xmin, xmax, ymin, ymax)
     x, y = xmin, ymin
 
@@ -208,7 +211,7 @@ function initial_condition(table, xmin, xmax, ymin, ymax)
         x = xmin + rand()*(xmax-xmin)
         y = ymin + rand()*(ymax-ymin)
 
-        if isvalid(Vector2D(x,y), table)  # valid if outside all discs
+        if isoutside(Vector2D(x,y), table)  # valid if outside all discs
             break
         end
     end
@@ -223,17 +226,16 @@ function initial_condition(table, xmin, xmax, ymin, ymax)
 end
 
 
-
-
-### Main program
-
-function Sinai_billiard(radius,periodic_x=false,periodic_y=false)
+@doc """Create a Sinai billiard table (a square with a disc in the centre).
+It may be periodic in the $x$ and/or $y$ directions.""" ->
+function Sinai_billiard(radius, periodic_x=false, periodic_y=false)
 
     obstacles = Obstacle[]
 
     push!(obstacles, Disc([0., 0.], radius) )
 
     if periodic_x
+        # create a pair of opposite `CellBoundary`s:
         right = CellBoundary([0.5, -0.5], [-1., 0.],Vector2D(1,0))
         left  = CellBoundary([-0.5, 0.5], [1., 0.],Vector2D(-1,0))
         right.other_side = left
@@ -259,7 +261,7 @@ function Sinai_billiard(radius,periodic_x=false,periodic_y=false)
 end
 
 
-@doc """Simulate a single particle p on a billiard table for a given of collisions"""->
+@doc """Simulate a single particle p on a billiard table for a given number of collisions."""->
 function billiard_dynamics(p, table, num_collisions)
 
     xs = [p.x]
@@ -281,7 +283,7 @@ function billiard_dynamics(p, table, num_collisions)
 end
 
 @doc """Simulate a single particle p on a billiard table for a given of collisions on
-        a periodic billiard table."""->
+        a *periodic* billiard table."""->
 function billiard_dynamics_on_lattice(p, table, num_collisions)
 
     xs = [p.x]
