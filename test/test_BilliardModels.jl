@@ -3,7 +3,6 @@ using FactCheck
 #push!(LOAD_PATH, "/Users/dsanders/Dropbox/papers/billiards/")
 
 using BilliardModels
-VERSION < v"0.4-" && using Docile
 
 #using Vector2d
 
@@ -41,6 +40,11 @@ facts("Billiard table tests") do
     next_collision = calculate_next_collision(p, table, nothing)
     @fact next_collision[2] => Vector2D(-1., 0.)  # new velocity after reflecting on vertical boundary
     @fact next_collision[3] => 0.3  # collision time
+
+    p = Particle([0.2, 0], [-1, 0])
+    next_collision = calculate_next_collision(p, table, nothing)
+    @fact isa(next_collision[4], Disc) => true
+
 
 end
 
