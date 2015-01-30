@@ -4,32 +4,32 @@ using BilliardModels
 
 @pyimport matplotlib.patches as patches
 
-import PyPlot.draw
-export draw
+#import PyPlot.draw
+export bdraw
 
-function draw(d::Disc, subplot)  # default is the current axis
+function bdraw(d::Disc, subplot)  # default is the current axis
 
     circ = patches.Circle((d.centre.x, d.centre.y), d.radius, alpha=0.5)
     subplot[:add_patch](circ)
 end
 
-function draw(p::Plane, subplot)  # don't draw anything for plane? This is too naive
+function bdraw(p::AbstractPlane, subplot)  # don't draw anything for plane? This is too naive
 end
 
-function draw(table::BilliardTable, subplot)
+function bdraw(table::BilliardTable, subplot)
 
     # Calculate the minimum and maximum of the points used to define the planes:
     xmax, xmin = -Inf, Inf
     ymax, ymin = -Inf, Inf
 
     for obstacle in table.obstacles
-        if typeof(obstacle) == Plane
+        if isa(obstacle, AbstractPlane)
             xmin = min(xmin, obstacle.c.x)
             xmax = max(xmax, obstacle.c.x)
             ymin = min(ymin, obstacle.c.y)
             ymax = max(ymax, obstacle.c.y)
         else
-            draw(obstacle, subplot)  # draw the non-plane objects
+            bdraw(obstacle, subplot)  # draw the non-plane objects
         end
     end
 
@@ -38,7 +38,7 @@ function draw(table::BilliardTable, subplot)
                     [ymin, ymin, ymax, ymax, ymin],"-k",lw=2)
 end
 
-function draw{T}(xs::Array{Vector2D{T},1}, subplot)
+function bdraw(xs::Array, subplot)
 
     x = [pt.x for pt in xs]
     y = [pt.y for pt in xs]
@@ -47,7 +47,7 @@ function draw{T}(xs::Array{Vector2D{T},1}, subplot)
 
 end
 
-function draw(p::Particle, subplot, draw_velocity=true)
+function bdraw(p::AbstractParticle, subplot, draw_velocity=true)
     pos = p.x
     vel = p.v
 
