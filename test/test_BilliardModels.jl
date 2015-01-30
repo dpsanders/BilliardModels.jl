@@ -25,4 +25,22 @@ facts("Disc tests") do
 
 end
 
+facts("Plane tests") do
+    o = Plane([0,0], [1, 1])
+    p = Particle([-1, 0], [1, 0])
+
+    @fact collision_time(p, o) => 1
+end
+
+facts("Billiard table tests") do
+    table = Sinai_billiard(0.1)
+    p = Particle([0.2, 0], [1, 0])
+
+    next_collision = calculate_next_collision(p, table, nothing)
+    @fact next_collision[2] => Vector2D(-1., 0.)  # new velocity after reflecting on vertical boundary
+    @fact next_collision[3] => 0.3  # collision time
+
+end
+
+
 

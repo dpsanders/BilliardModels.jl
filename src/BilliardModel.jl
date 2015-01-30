@@ -104,7 +104,7 @@ end
 isoutside(x, disc::Disc) = norm(x - disc.centre) > disc.radius  # must change if
 
 
-
+@doc """Calculate collison time of particle with plane.""" ->
 collision_time(p::AbstractParticle, plane::AbstractPlane) =
     dot(plane.c - p.x, plane.normal) / dot(p.v, plane.normal)
 
@@ -173,7 +173,8 @@ function calculate_next_collision(p::Particle, billiard_table, previous_obstacle
 
     x_collision = p.x + p.v*first_collision_time
 
-    v_new = post_collision_velocity(x_collision, p.v, which_obstacle_hit)
+    x_collision, v_new, which_obstacle_hit = collide(x_collision, p.v, which_obstacle_hit)
+    # Actually only need to return new velocity
 
     return x_collision, v_new, first_collision_time, which_obstacle_hit
 end
