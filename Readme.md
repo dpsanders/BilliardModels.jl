@@ -9,5 +9,4 @@ These kinds of models are simple physical systems in which different mathematica
 Contributors:
 
 - David Ketcheson, KAUST
-- David P. Sanders, Department of Physics, Faculty of Sciences, Universidad Nacional Autónoma de México (UNAM)
-
+- [David P. Sanders](http://sistemas.fciencias.unam.mx/~dsanders), Department of Physics, Faculty of Sciences, Universidad Nacional Autónoma de México (UNAM)
