@@ -202,9 +202,13 @@ function collide(x_collision, v, boundary::CellBoundary)
     return x_new, v, boundary.other_side
 end
 
-@doc """Generate an initial condition in the allowed region of the billiard table
+@doc """Generate a random initial condition, uniformly in the allowed region of the billiard table
 ("outside") the billiard obstacles. Here, "outside" for a plane is taken to mean that
-the allowed region lies *in the direction of the plane's normal vector*.""" ->
+the allowed region lies *in the direction of the plane's normal vector*.
+
+Velocities are generated uniformly on the unit circle S^1, so that in total the initial condition
+is generated uniformly with respect to Liouville measure.
+""" ->
 function initial_condition(table, xmin, xmax, ymin, ymax)
     x, y = xmin, ymin
 
