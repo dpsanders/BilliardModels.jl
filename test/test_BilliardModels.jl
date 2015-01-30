@@ -3,6 +3,8 @@ using FactCheck
 #push!(LOAD_PATH, "/Users/dsanders/Dropbox/papers/billiards/")
 
 using BilliardModels
+VERSION < v"0.4-" && using Docile
+
 #using Vector2d
 
 facts("Particle tests") do

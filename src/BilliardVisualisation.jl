@@ -2,6 +2,9 @@ using PyPlot
 using PyCall
 using BilliardModels
 
+VERSION < v"0.4-" && using Docile
+
+
 @pyimport matplotlib.patches as patches
 
 #import PyPlot.draw
