@@ -47,10 +47,16 @@ function draw{T}(xs::Array{Vector2D{T},1}, subplot)
 
 end
 
-function draw(p::Particle, subplot; draw_velocity=true)
+function draw(p::Particle, subplot, draw_velocity=true)
     pos = p.x
+    vel = p.v
+
     subplot[:plot]([pos.x], [pos.y], "o")
 
-   # if draw_velocity, draw an arr
+    dt = 0.05
+
+    if draw_velocity
+        subplot[:arrow](pos.x, pos.y, dt*vel.x, dt*vel.y, head_width=0.05, head_length=0.05)
+    end
 
 end
