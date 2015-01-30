@@ -1,7 +1,8 @@
 
 module BilliardModels
 
-using Docile
+VERSION < v"0.4-" && using Docile
+
 
 
 include("Vector2d.jl")

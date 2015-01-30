@@ -227,7 +227,7 @@ end
 
 
 @doc """Create a Sinai billiard table (a square with a disc in the centre).
-It may be periodic in the $x$ and/or $y$ directions.""" ->
+It may be periodic in the x and/or y directions.""" ->
 function Sinai_billiard(radius, periodic_x=false, periodic_y=false)
 
     obstacles = Obstacle[]

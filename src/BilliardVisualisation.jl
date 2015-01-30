@@ -7,6 +7,8 @@ using BilliardModels
 #import PyPlot.draw
 export bdraw
 
+@doc """The various `bdraw` functions draw parts of the billiard(hence the `b`
+at the start of the name, to avoid using `draw` which conflicts with PyPlot.)""" ->
 function bdraw(d::Disc, subplot)  # default is the current axis
 
     circ = patches.Circle((d.centre.x, d.centre.y), d.radius, alpha=0.5)

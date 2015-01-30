@@ -19,11 +19,12 @@ Vector2D{T}(v::Array{T,1}) = Vector2D(v[1], v[2])
 ==(v::Vector2D, w::Vector2D) = v.x==w.x && v.y==w.y
 
 dot(v::Vector2D, w::Vector2D) = v.x*w.x + v.y*w.y
-
 norm(v::Vector2D) = √(v ⋅ v)
 
+getindex(v::Vector2D, i) = (i==1) ? v.x : v.y
+
+# There are problems with this `convert`
 convert{T}(::Type{Vector2D}, v::Array{T, 1}) = Vector2D(v[1], v[2])
 
-getindex(v::Vector2D, i) = (i==1) ? v.x : v.y
 
 #end
