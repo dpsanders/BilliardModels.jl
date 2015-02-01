@@ -58,10 +58,9 @@ end
 # BilliardTable type.
 
 @doc """A `BilliardTable` is just a list of obstacles.""" ->
-type BilliardTable
+immutable BilliardTable
   obstacles::Vector{Obstacle}
 end
-
 
 
 @doc """`get_lattice_increment` returns the lattice_increment of an obstacle. This is a zero vector
@@ -199,7 +198,7 @@ function collide(x_collision, v, boundary::CellBoundary)
 
     x_new = x_collision + boundary.normal
 
-    return x_new, v, boundary.other_side
+    return x_new, v, boundary.other_side  # velocity stays the same
 end
 
 @doc """Generate a random initial condition, uniformly in the allowed region of the billiard table
@@ -287,9 +286,8 @@ function billiard_dynamics(p, table, num_collisions)
 
 end
 
-@doc """Simulate a single particle p on a billiard table for a given number of collisions on
-        a *periodic* billiard table.
-        `num_collisions` currently includes boundary "collisions"."""->
+@doc """Simulate a single particle p on a billiard table for a given number of obstacle collisions
+        (excluding "collisions" on boundaries) on a *periodic* billiard table."""->
 function billiard_dynamics_on_lattice(p, table, num_collisions)
 
     xs = [p.x]
@@ -299,8 +297,10 @@ function billiard_dynamics_on_lattice(p, table, num_collisions)
 
     free_path_length = 0.0
     free_paths = Float64[]
+    num_obstacle_collisions = 0
 
-    for t in 1:num_collisions
+    #for t in 1:num_collisions
+    while num_obstacle_collisions < num_collisions
         x_new, v_new, first_collision_time, which_obstacle_hit, lattice_increment =
             calculate_next_collision_on_lattice(p, table, which_obstacle_hit)
 
@@ -333,6 +333,8 @@ function billiard_dynamics_on_lattice(p, table, num_collisions)
             push!(lattice_vectors, p.lattice_vector)
             push!(free_paths, free_path_length)
             free_path_length = 0.0
+
+            num_obstacle+collisions += 1
 
         end
     end
