@@ -12,16 +12,18 @@ export bdraw
 
 @doc """The various `bdraw` functions draw parts of the billiard(hence the `b`
 at the start of the name, to avoid using `draw` which conflicts with PyPlot.)""" ->
-function bdraw(d::Disc, subplot)  # default is the current axis
+function bdraw(d::Disc, subplot, offset)  # default is the current axis
 
-    circ = patches.Circle((d.centre.x, d.centre.y), d.radius, alpha=0.5)
+    circ = patches.Circle((d.centre.x + offset.x,
+                           d.centre.y + offset.y),
+                          d.radius, alpha=0.5)
     subplot[:add_patch](circ)
 end
 
 function bdraw(p::AbstractPlane, subplot)  # don't draw anything for plane? This is too naive
 end
 
-function bdraw(table::BilliardTable, subplot)
+function bdraw(table::BilliardTable, subplot, offset::Vector2D{Int}=Vector2D(0,0))
 
     # Calculate the minimum and maximum of the points used to define the planes:
     xmax, xmin = -Inf, Inf
@@ -34,7 +36,7 @@ function bdraw(table::BilliardTable, subplot)
             ymin = min(ymin, obstacle.c.y)
             ymax = max(ymax, obstacle.c.y)
         else
-            bdraw(obstacle, subplot)  # draw the non-plane objects
+            bdraw(obstacle, subplot, offset)  # draw the non-plane objects
         end
     end
 

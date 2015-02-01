@@ -37,7 +37,7 @@ immutable Plane <: AbstractPlane
     normal::Vector2D
 end
 
-@doc """A `CellBoundary` is a boundary between parts of a lattice.
+@doc """A `CellBoundary` is a boundary between neighbouring cells on a lattice.
         It is assumed to be planar.  The constructor creates an incomplete
         object, so the `other_side` field must be added later
         (once the corresponding `CellBoundary` on the other side of the next cell has been constructed).
@@ -45,19 +45,19 @@ end
         `lattice_increment` is a vector which says which new lattice cell a particle enters when it crosses this
         `CellBoundary`.
         """ ->
-type CellBoundary <: AbstractPlane
+type CellBoundary <: AbstractPlane  # immutable not (currently?) allowed due to the partial construction
     c::Vector2D
     normal::Vector2D
     lattice_increment::Vector2D{Int}
     other_side::CellBoundary
 
-    CellBoundary(c,normal,lattice_increment) = new(c,normal,lattice_increment)
+    CellBoundary(c,normal,lattice_increment) = new(c,normal,lattice_increment)  # partial constructor leaving other_side undefined
 end
 
 
 # BilliardTable type.
 
-@doc """A `BilliardTable` is currently just a list of obstacles.""" ->
+@doc """A `BilliardTable` is just a list of obstacles.""" ->
 type BilliardTable
   obstacles::Vector{Obstacle}
 end
@@ -67,7 +67,7 @@ end
 @doc """`get_lattice_increment` returns the lattice_increment of an obstacle. This is a zero vector
 except for `CellBoundary`s.""" ->
 
-get_lattice_increment(o::Obstacle) = [0, 0]  # non-boundary obstacles do not change the lattice cell
+get_lattice_increment(o::Obstacle) = Vector2D(0, 0)  # non-boundary obstacles do not change the lattice cell
 get_lattice_increment(o::CellBoundary) = o.lattice_increment
 
 
@@ -241,8 +241,8 @@ function Sinai_billiard(radius, periodic_x=false, periodic_y=false)
 
     if periodic_x
         # create a pair of opposite `CellBoundary`s:
-        right = CellBoundary([0.5, -0.5], [-1., 0.],Vector2D(1,0))
-        left  = CellBoundary([-0.5, 0.5], [1., 0.],Vector2D(-1,0))
+        right = CellBoundary([0.5, -0.5], [-1., 0.], Vector2D(1, 0))
+        left  = CellBoundary([-0.5, 0.5], [1., 0.], Vector2D(-1, 0))
         right.other_side = left
         left.other_side = right
         push!(obstacles, right, left)
@@ -252,8 +252,8 @@ function Sinai_billiard(radius, periodic_x=false, periodic_y=false)
     end
 
     if periodic_y
-        top = CellBoundary([0.5, 0.5], [0., -1.],Vector2D(0,1))
-        bottom  = CellBoundary([-0.5, -0.5], [0., 1.],Vector2D(0,-1))
+        top = CellBoundary([0.5, 0.5], [0., -1.],Vector2D(0, 1))
+        bottom  = CellBoundary([-0.5, -0.5], [0., 1.],Vector2D(0, -1))
         top.other_side = bottom
         bottom.other_side = top
         push!(obstacles, top, bottom)
@@ -287,8 +287,9 @@ function billiard_dynamics(p, table, num_collisions)
 
 end
 
-@doc """Simulate a single particle p on a billiard table for a given of collisions on
-        a *periodic* billiard table."""->
+@doc """Simulate a single particle p on a billiard table for a given number of collisions on
+        a *periodic* billiard table.
+        `num_collisions` currently includes boundary "collisions"."""->
 function billiard_dynamics_on_lattice(p, table, num_collisions)
 
     xs = [p.x]
@@ -296,23 +297,46 @@ function billiard_dynamics_on_lattice(p, table, num_collisions)
 
     which_obstacle_hit = nothing
 
+    free_path_length = 0.0
+    free_paths = Float64[]
+
     for t in 1:num_collisions
         x_new, v_new, first_collision_time, which_obstacle_hit, lattice_increment =
             calculate_next_collision_on_lattice(p, table, which_obstacle_hit)
 
-        # Position where it hit the obstacle: (This is a bit of a hack)
-        x_collision = p.x + p.v*first_collision_time
-        push!(xs,x_collision)
-        push!(lattice_vectors, p.lattice_vector)
+        # version to draw periodised orbits:
+        # outputs the position twice, once before and once after the collision
 
+        ## Position where it hit the obstacle at the collision: (This is a bit of a hack)
+        # x_collision = p.x + p.v*first_collision_time
+        # push!(xs,x_collision)
+        # push!(lattice_vectors, p.lattice_vector)
 
+        # Periodise:
         p.x, p.v = x_new, v_new
         p.lattice_vector += lattice_increment
-        push!(xs, p.x)
-        push!(lattice_vectors, p.lattice_vector)
 
+
+        # push!(xs, p.x)
+        # push!(lattice_vectors, p.lattice_vector)
+
+
+        ## version which takes account only of collisions with objects that are not CellBoundary
+
+        free_path_length += first_collision_time
+
+        #@show typeof(which_obstacle_hit)
+
+        if !isa(which_obstacle_hit, CellBoundary)
+
+            push!(xs, p.x)
+            push!(lattice_vectors, p.lattice_vector)
+            push!(free_paths, free_path_length)
+            free_path_length = 0.0
+
+        end
     end
 
-    return xs, lattice_vectors
+    return xs, lattice_vectors, free_paths
 
 end
