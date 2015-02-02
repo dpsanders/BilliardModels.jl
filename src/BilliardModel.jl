@@ -4,38 +4,43 @@ export Sinai_billiard
 export calculate_next_collision, billiard_dynamics, initial_condition
 
 # exports of lattice functionality:
-export ParticleOnLattice, CellBoundary, billiard_dynamics_on_lattice
+export ParticleOnLattice, CellBoundary, billiard_dynamics_on_lattice,
+        calculate_next_collision_on_lattice
 
 # particle types:
 
-abstract AbstractParticle
+abstract AbstractParticle{T}
 
-type Particle <: AbstractParticle
-    x::Vector2D
-    v::Vector2D
+type Particle{T} <: AbstractParticle{T}
+    x::Vector2D{T}
+    v::Vector2D{T}
 end
 
-type ParticleOnLattice <: AbstractParticle
-    x::Vector2D
-    v::Vector2D
+type ParticleOnLattice{T} <: AbstractParticle{T}
+    x::Vector2D{T}
+    v::Vector2D{T}
     lattice_vector::Vector2D{Int}
 end
 
 # obstacle types:
 
-abstract Obstacle
+abstract Obstacle{T}
 
-immutable Disc <: Obstacle
-    centre::Vector2D
-    radius::Real
+immutable Disc{T} <: Obstacle{T}
+    centre::Vector2D{T}
+    radius::T
 end
 
-abstract AbstractPlane <: Obstacle
+Disc(v::Vector, r) = Disc(Vector2D(v), r)
 
-immutable Plane <: AbstractPlane
-    c::Vector2D  # an aribtrary point on the plane
-    normal::Vector2D
+abstract AbstractPlane{T} <: Obstacle{T}
+
+immutable Plane{T} <: AbstractPlane{T}
+    point_on_plane::Vector2D{T}  # an aribtrary point on the plane
+    normal::Vector2D{T}
 end
+
+Plane(v1::Vector, v2::Vector) = Plane(Vector2D(v1), Vector2D(v2))
 
 @doc """A `CellBoundary` is a boundary between neighbouring cells on a lattice.
         It is assumed to be planar.  The constructor creates an incomplete
@@ -45,14 +50,17 @@ end
         `lattice_increment` is a vector which says which new lattice cell a particle enters when it crosses this
         `CellBoundary`.
         """ ->
-type CellBoundary <: AbstractPlane  # immutable not (currently?) allowed due to the partial construction
-    c::Vector2D
-    normal::Vector2D
+type CellBoundary{T} <: AbstractPlane{T}  # immutable not (currently?) allowed due to the partial construction
+    point_on_plane::Vector2D{T}
+    normal::Vector2D{T}
     lattice_increment::Vector2D{Int}
-    other_side::CellBoundary
+    other_side::CellBoundary{T}
 
-    CellBoundary(c,normal,lattice_increment) = new(c,normal,lattice_increment)  # partial constructor leaving other_side undefined
+    CellBoundary(point, normal, lattice_increment) = new(point, normal, lattice_increment)  # partial constructor leaving other_side undefined
 end
+
+CellBoundary{T}(point::Vector{T}, normal::Vector{T}, lattice_increment::Vector) =
+    CellBoundary{T}(Vector2D(point), Vector2D(normal), Vector2D(lattice_increment))
 
 
 # BilliardTable type.
@@ -75,19 +83,19 @@ get_lattice_increment(o::CellBoundary) = o.lattice_increment
         assuming the particle starts outside the disc and the
         particle speed is one (using the quadratic formula).
 
-        Returns -1 if no collision.
+        Returns -Inf if no collision.
         """ ->
-function collision_time(p::AbstractParticle, disc::Disc)
+function collision_time{T}(p::AbstractParticle{T}, disc::Disc{T})
 
-    disp = p.x-disc.centre
+    disp = p.x - disc.centre
 
     B = dot(p.v, disp)
     C = dot(disp, disp) - disc.radius^2
 
-    discriminant = B*B - C
+    discriminant = B^2 - C
 
-    if discriminant < 0
-        return -1.
+    if discriminant < 0.0
+        return -Inf
     end
 
     return -B - √discriminant  # NB: this supposes that the particle is *outside* the disc
@@ -95,22 +103,22 @@ function collision_time(p::AbstractParticle, disc::Disc)
 end
 
 @doc """Compute normal vector to disc boundary, at a point x that must lie *on the boundary*""" ->
-function normal(disc::Disc, x)
+function normal{T}(disc::Disc{T}, x::Vector2D{T})
     return (x - disc.centre) / disc.radius
 end
 
 @doc """Check whether a given position is inside a disc.""" ->
-isoutside(x, disc::Disc) = norm(x - disc.centre) > disc.radius  # must change if
+isoutside{T}(x::Vector2D{T}, disc::Disc{T}) = norm(x - disc.centre) > disc.radius
 
 
 @doc """Calculate collison time of particle with plane.""" ->
-collision_time(p::AbstractParticle, plane::AbstractPlane) =
-    dot(plane.c - p.x, plane.normal) / dot(p.v, plane.normal)
+collision_time{T}(p::AbstractParticle{T}, plane::AbstractPlane{T}) =
+    dot(plane.point_on_plane - p.x, plane.normal) / dot(p.v, plane.normal)
 
 normal(plane::AbstractPlane, x) = plane.normal  # same normal vector for all positions x on plane
 
 @doc """Convention: the normal points towards the allowed part of the billiard table""" ->
-isoutside(x, plane::AbstractPlane) = dot(x - plane.c, plane.normal) > 0.0
+isoutside(x, plane::AbstractPlane) = dot(x - plane.point_on_plane, plane.normal) > 0.0
 
 @doc """`isoutside` finds if the particle is in the allowed part of the billiard table,
 i.e. is "outside" the billiard obstacles.""" ->
@@ -126,12 +134,16 @@ end
 
 @doc """The two versions of `calculate_next_collision` return the information of what
 the result is of doing the next collision, *without* updating the particle.""" ->
-function calculate_next_collision_on_lattice(p::ParticleOnLattice, billiard_table, previous_obstacle_hit)
+function calculate_next_collision_on_lattice(p::ParticleOnLattice,
+                                             billiard_table::BilliardTable,
+                                             previous_obstacle_hit::Obstacle)
 
     obstacles = billiard_table.obstacles
 
     first_collision_time = Inf
-    which_obstacle_hit = nothing
+    artificial_obstacle = Plane([-Inf, -Inf], [0.0, 0.0])
+    which_obstacle_hit = artificial_obstacle
+    # artificial non-existent obstacle to avoid type instability
 
     for obstacle in obstacles
         obstacle === previous_obstacle_hit && continue
@@ -142,6 +154,8 @@ function calculate_next_collision_on_lattice(p::ParticleOnLattice, billiard_tabl
             which_obstacle_hit, first_collision_time = obstacle, t
         end
     end
+
+    @assert which_obstacle_hit != artificial_obstacle  # hit a real obstacle
 
     x_collision = p.x + p.v*first_collision_time
 
@@ -240,8 +254,8 @@ function Sinai_billiard(radius, periodic_x=false, periodic_y=false)
 
     if periodic_x
         # create a pair of opposite `CellBoundary`s:
-        right = CellBoundary([0.5, -0.5], [-1., 0.], Vector2D(1, 0))
-        left  = CellBoundary([-0.5, 0.5], [1., 0.], Vector2D(-1, 0))
+        right = CellBoundary([0.5, -0.5], [-1., 0.], [1, 0])
+        left  = CellBoundary([-0.5, 0.5], [1., 0.], [-1, 0])
         right.other_side = left
         left.other_side = right
         push!(obstacles, right, left)
@@ -251,8 +265,8 @@ function Sinai_billiard(radius, periodic_x=false, periodic_y=false)
     end
 
     if periodic_y
-        top = CellBoundary([0.5, 0.5], [0., -1.],Vector2D(0, 1))
-        bottom  = CellBoundary([-0.5, -0.5], [0., 1.],Vector2D(0, -1))
+        top = CellBoundary([0.5, 0.5], [0., -1.], [0, 1])
+        bottom  = CellBoundary([-0.5, -0.5], [0., 1.], [0, -1])
         top.other_side = bottom
         bottom.other_side = top
         push!(obstacles, top, bottom)
@@ -293,11 +307,14 @@ function billiard_dynamics_on_lattice(p, table, num_collisions)
     xs = [p.x]
     lattice_vectors = [p.lattice_vector]
 
-    which_obstacle_hit = nothing
+    which_obstacle_hit = Plane([-Inf, -Inf], [0., 0.])
+    # which_obstacle_hit = nothing
 
     free_path_length = 0.0
     free_paths = Float64[]
     num_obstacle_collisions = 0
+
+    first_collision_time = Inf
 
     #for t in 1:num_collisions
     while num_obstacle_collisions < num_collisions
@@ -334,7 +351,7 @@ function billiard_dynamics_on_lattice(p, table, num_collisions)
             push!(free_paths, free_path_length)
             free_path_length = 0.0
 
-            num_obstacle+collisions += 1
+            num_obstacle_collisions += 1
 
         end
     end
