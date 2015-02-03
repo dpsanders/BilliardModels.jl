@@ -15,7 +15,7 @@ immutable Vector2D{T} # <: AbstractArray{T,1}
 end
 
 Vector2D{T}(v::Vector{T}) = Vector2D{T}(v[1], v[2])
-Vector2D{T}(v::Vector) = Vector2D{T}(v[1], v[2])
+#Vector2D{T}(v::Vector) = Vector2D{T}(v[1], v[2])
 #Vector2D(v::Vector) = Vector2D(v[1], v[2])
 
 +{T}(v::Vector2D{T}, w::Vector2D{T}) = Vector2D{T}(v.x+w.x, v.y+w.y)

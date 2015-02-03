@@ -140,8 +140,8 @@ function calculate_next_collision_on_lattice{T}(p::ParticleOnLattice{T},
 
     obstacles = billiard_table.obstacles
 
-    first_collision_time = Inf
-    artificial_obstacle = Plane([-Inf, -Inf], [0.0, 0.0])
+    first_collision_time = convert(T, Inf)
+    artificial_obstacle = Plane{T}([zero(T), zero(T)], [zero(T), zero(T)])
     which_obstacle_hit = artificial_obstacle
     # artificial non-existent obstacle to avoid type instability
 
@@ -155,7 +155,7 @@ function calculate_next_collision_on_lattice{T}(p::ParticleOnLattice{T},
         end
     end
 
-    @assert which_obstacle_hit != artificial_obstacle  # hit a real obstacle
+    #@assert which_obstacle_hit != artificial_obstacle  # hit a real obstacle
 
     x_collision = p.x + p.v*first_collision_time
 
