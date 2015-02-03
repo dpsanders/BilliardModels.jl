@@ -66,8 +66,8 @@ CellBoundary{T}(point::Vector{T}, normal::Vector{T}, lattice_increment::Vector) 
 # BilliardTable type.
 
 @doc """A `BilliardTable` is just a list of obstacles.""" ->
-immutable BilliardTable
-  obstacles::Vector{Obstacle}
+immutable BilliardTable{T}
+  obstacles::Vector{Obstacle{T}}
 end
 
 
@@ -94,11 +94,11 @@ function collision_time{T}(p::AbstractParticle{T}, disc::Disc{T})
 
     discriminant = B^2 - C
 
-    if discriminant < 0.0
-        return -Inf
+    if discriminant < zero(T)
+        return -convert(T, Inf)
     end
 
-    return -B - √discriminant  # NB: this supposes that the particle is *outside* the disc
+    return convert(T, -B - √discriminant)  # NB: this supposes that the particle is *outside* the disc
 
 end
 
@@ -134,9 +134,9 @@ end
 
 @doc """The two versions of `calculate_next_collision` return the information of what
 the result is of doing the next collision, *without* updating the particle.""" ->
-function calculate_next_collision_on_lattice(p::ParticleOnLattice,
-                                             billiard_table::BilliardTable,
-                                             previous_obstacle_hit::Obstacle)
+function calculate_next_collision_on_lattice{T}(p::ParticleOnLattice{T},
+                                             billiard_table::BilliardTable{T},
+                                             previous_obstacle_hit::Obstacle{T})
 
     obstacles = billiard_table.obstacles
 
@@ -246,11 +246,11 @@ end
 
 @doc """Create a Sinai billiard table (a square with a disc in the centre).
 It may be periodic in the x and/or y directions.""" ->
-function Sinai_billiard(radius, periodic_x=false, periodic_y=false)
+function Sinai_billiard{T}(radius::T, periodic_x=false, periodic_y=false)
 
-    obstacles = Obstacle[]
+    obstacles = Obstacle{T}[]
 
-    push!(obstacles, Disc([0., 0.], radius) )
+    push!(obstacles, Disc{T}([0., 0.], radius) )
 
     if periodic_x
         # create a pair of opposite `CellBoundary`s:
