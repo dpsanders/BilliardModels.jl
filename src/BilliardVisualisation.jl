@@ -31,10 +31,10 @@ function bdraw(table::BilliardTable, subplot, offset::Vector2D{Int}=Vector2D(0,0
 
     for obstacle in table.obstacles
         if isa(obstacle, AbstractPlane)
-            xmin = min(xmin, obstacle.c.x)
-            xmax = max(xmax, obstacle.c.x)
-            ymin = min(ymin, obstacle.c.y)
-            ymax = max(ymax, obstacle.c.y)
+            xmin = min(xmin, obstacle.point_on_plane.x)
+            xmax = max(xmax, obstacle.point_on_plane.x)
+            ymin = min(ymin, obstacle.point_on_plane.y)
+            ymax = max(ymax, obstacle.point_on_plane.y)
         else
             bdraw(obstacle, subplot, offset)  # draw the non-plane objects
         end

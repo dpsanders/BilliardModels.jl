@@ -1,7 +1,5 @@
 using BilliardModels
 
-
-
 function run_sinai(num_particles)
     billiard_table = Sinai_billiard(0.354, true, true)  # periodic in x and y
 

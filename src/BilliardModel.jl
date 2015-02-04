@@ -16,6 +16,8 @@ type Particle{T} <: AbstractParticle{T}
     v::Vector2D{T}
 end
 
+Particle(x::Vector, v::Vector) = Particle(Vector2D(x), Vector2D(v))
+
 type ParticleOnLattice{T} <: AbstractParticle{T}
     x::Vector2D{T}
     v::Vector2D{T}
@@ -150,7 +152,7 @@ function calculate_next_collision_on_lattice{T}(p::ParticleOnLattice{T},
 
         t = collision_time(p, obstacle)
 
-        if t > 0.0 && t < first_collision_time
+        if 0.0 < t < first_collision_time
             which_obstacle_hit, first_collision_time = obstacle, t
         end
     end
@@ -158,7 +160,6 @@ function calculate_next_collision_on_lattice{T}(p::ParticleOnLattice{T},
     #@assert which_obstacle_hit != artificial_obstacle  # hit a real obstacle
 
     x_collision = p.x + p.v*first_collision_time
-
     lattice_increment = get_lattice_increment(which_obstacle_hit)
 
     x_new, v_new, which_obstacle_hit = collide(x_collision, p.v, which_obstacle_hit)
@@ -194,7 +195,7 @@ end
 
 
 @doc """`collide` *implements* an elastic collision""" ->
-function collide(x_collision, v, obstacle::Obstacle)
+function collide{T}(x_collision::Vector2D{T}, v::Vector2D{T}, obstacle::Obstacle{T})
     n = normal(obstacle, x_collision)
 
     v_new = v - 2.0*dot(n,v)*n  # reflejar solo si es disco; si es plano, pasar a traves
@@ -208,7 +209,7 @@ end
         This assumes that the distance between opposite
         CellBoundary objects is 1 and the normal is a unit normal
         pointing inwards (i.e. towards the available space on the billiard table).""" ->
-function collide(x_collision, v, boundary::CellBoundary)
+function collide{T}(x_collision::Vector2D{T}, v::Vector2D{T}, boundary::CellBoundary{T})
 
     x_new = x_collision + boundary.normal
 
@@ -280,7 +281,7 @@ end
 
 
 @doc """Simulate a single particle p on a billiard table for a given number of collisions."""->
-function billiard_dynamics(p, table, num_collisions)
+function billiard_dynamics{T}(p::Particle{T}, table::BilliardTable{T}, num_collisions::Integer)
 
     xs = [p.x]
 
@@ -302,7 +303,7 @@ end
 
 @doc """Simulate a single particle p on a billiard table for a given number of obstacle collisions
         (excluding "collisions" on boundaries) on a *periodic* billiard table."""->
-function billiard_dynamics_on_lattice(p, table, num_collisions)
+function billiard_dynamics_on_lattice{T}(p::ParticleOnLattice{T}, table::BilliardTable{T}, num_collisions::Integer)
 
     xs = [p.x]
     lattice_vectors = [p.lattice_vector]
