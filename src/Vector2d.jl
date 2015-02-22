@@ -18,7 +18,9 @@ Vector2D{T}(v::Vector{T}) = Vector2D{T}(v[1], v[2])
 #Vector2D{T}(v::Vector) = Vector2D{T}(v[1], v[2])
 #Vector2D(v::Vector) = Vector2D(v[1], v[2])
 
++(v::Vector2D, w::Vector2D) = Vector2D(v.x+w.x, v.y+w.y)
 +{T}(v::Vector2D{T}, w::Vector2D{T}) = Vector2D{T}(v.x+w.x, v.y+w.y)
+#+{S,T}(v::Vector2D{S}, w::Vector2D{T}) = Vector2D{promote_rule(T,S)}(v.x+w.x, v.y+w.y)
 -{T}(v::Vector2D{T}, w::Vector2D{T}) = Vector2D{T}(v.x-w.x, v.y-w.y)
 *{T}(v::Vector2D{T}, lamb::Number) = Vector2D{T}(v.x*lamb, v.y*lamb)
 *{T}(lamb::Number, v::Vector2D{T}) = v*lamb

@@ -7,6 +7,9 @@ export calculate_next_collision, billiard_dynamics, initial_condition
 export ParticleOnLattice, CellBoundary, billiard_dynamics_on_lattice,
         calculate_next_collision_on_lattice
 
+export continuous_time
+
+
 # particle types:
 
 abstract AbstractParticle{T}
@@ -301,8 +304,14 @@ function billiard_dynamics{T}(p::Particle{T}, table::BilliardTable{T}, num_colli
 
 end
 
-@doc """Simulate a single particle p on a billiard table for a given number of obstacle collisions
-        (excluding "collisions" on boundaries) on a *periodic* billiard table."""->
+@doc """Simulate discrete-time (collision) dynamics for a single particle
+        p on a billiard table for a given number of obstacle collisions
+        (excluding "collisions" on boundaries) on a *periodic* billiard table.\
+
+        p contains the initial conditions.
+
+        Returns the positions in the unit cells (*xs*) and the corresponding lattice cells (*ls*),
+        as well as the free paths."""->
 function billiard_dynamics_on_lattice{T}(p::ParticleOnLattice{T}, table::BilliardTable{T}, num_collisions::Integer)
 
     xs = [p.x]
@@ -358,5 +367,63 @@ function billiard_dynamics_on_lattice{T}(p::ParticleOnLattice{T}, table::Billiar
     end
 
     return xs, lattice_vectors, free_paths
+
+end
+
+
+@doc """Extract the particle position for given continuous times that are multiples of delta_t
+        from a discrete-time trajectory.
+
+        Use delta_t that are representable floating-point numbers
+        e.g. 0.125 instead of 0.1""" ->
+function continuous_time(xs, lattice_vectors, free_paths, delta_t)
+    t = 0.0
+    collision_positions = xs + lattice_vectors
+    collision_times = cumsum([0; free_paths])
+
+    t_final = collision_times[end]
+    push!(collision_times, t_final)  # duplicate -- necessary?
+
+
+    collision = 1
+    time_counter = 1
+
+    positions = [xs[1];]  # initial position at time 0
+    times = [0.0;]
+
+    next_output_time = delta_t
+
+    time_left_for_step = delta_t
+
+    # velocity:
+    direction = collision_positions[collision+1] - collision_positions[collision]
+    direction /= norm(direction)
+
+    while next_output_time < t_final
+
+        if next_output_time < collision_times[collision+1]
+
+            flight_time = next_output_time - collision_times[collision]
+
+            push!(positions, collision_positions[collision] + flight_time * direction)
+            push!(times, next_output_time)
+            time_counter += 1
+            next_output_time = time_counter * delta_t
+            # more accurate than adding delta_t if delta_t is not representable
+
+        else
+
+            collision += 1
+
+            direction = collision_positions[collision+1] - collision_positions[collision]
+            direction /= norm(direction)
+
+
+        end
+    end
+
+    positions, times
+
+
 
 end
