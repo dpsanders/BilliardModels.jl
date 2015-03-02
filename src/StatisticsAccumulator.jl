@@ -26,7 +26,7 @@ end
 function get_statistics(o::StatisticsObject)
     times = sort(collect(keys(o.data)))
 
-    [(t, state(o.data[t])) for t in times]
+    [tuple(t, state(o.data[t])..., o.data[t].n) for t in times]
 
 end
 
