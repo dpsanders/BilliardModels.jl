@@ -6,8 +6,15 @@ function run_lorentz(num_particles, num_collisions, delta_t=5.0)
 
     billiard_table = Sinai_billiard(0.354, true, true)  # periodic in x and y
 
-    stats_usual = StatisticsObject()  # usual statistics
-    stats_all_origins = StatisticsObject()  # use all times as origin
+    stats = StatisticsObject[]
+
+    num_stats_objects = 10
+    for i in 1:num_stats_objects+1
+        push!(stats, StatisticsObject())  # use all times as origin
+    end
+
+    # Divide statistics up according to first free path
+
 
     skip = 5
 
@@ -19,17 +26,19 @@ function run_lorentz(num_particles, num_collisions, delta_t=5.0)
         xs, ls, free_paths = billiard_dynamics_on_lattice(p, billiard_table, num_collisions)
         positions, times = continuous_time(xs, ls, free_paths, delta_t)
 
-        # "usual" statistics: use each time and position only once
-        for (t, xx) in zip(times, positions)
-            #r = norm(xx - x0)
-            r = xx[1] - x0[1]
-            add_data!(stats_usual, t, r)
+        first_free_path = free_paths[1]
+
+        if first_free_path < num_stats_objects
+            stats_object = stats[ceil(first_free_path)]
+        else
+            stats_object = stats[end]
         end
+
 
         # "all" statistics: use each (or nearly each) time and position as a new origin
         for i in 1:skip:length(times)
             t00 = times[i]
-            x00 = positions[i][1]
+            x00 = positions[i][1]  # x component
 
             for j in i+1:length(times) #skip:length(times)
 
@@ -37,14 +46,15 @@ function run_lorentz(num_particles, num_collisions, delta_t=5.0)
                 displacement = positions[j][1] - x00
 
                 #r = norm(displacement)
-                r = displacement
-                add_data!(stats_all_origins, time_displacement, r)
+                #r = displacement
+                add_data!(stats_object, time_displacement, displacement)
             end
         end
 
     end
 
-    get_statistics(stats_usual), get_statistics(stats_all_origins)
+    map(get_statistics, stats)
+
 end
 
 
