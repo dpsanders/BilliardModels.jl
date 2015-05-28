@@ -1,7 +1,7 @@
 #module Vector2d
 
 importall Base
-export Vector2D, convert, dot, getindex
+export Vector2D, convert, dot, getindex, norm, normsq
 
 @doc """A simple type for a 2-component vector.
 Previous tests seemed to show that this version was faster than
@@ -31,6 +31,7 @@ Vector2D{T}(v::Vector{T}) = Vector2D{T}(v[1], v[2])
 size{T}(v::Vector2D{T}) = 2
 dot{T}(v::Vector2D{T}, w::Vector2D{T}) = v.x*w.x + v.y*w.y
 norm{T}(v::Vector2D{T}) = √(v ⋅ v)
+normsq{T}(v::Vector2D{T}) = v ⋅ v
 
 getindex{T}(v::Vector2D{T}, i) = (i==1) ? v.x : v.y
 

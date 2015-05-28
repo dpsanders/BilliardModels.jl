@@ -1,2 +1,0 @@
-Pkg.add("FactCheck")
-
