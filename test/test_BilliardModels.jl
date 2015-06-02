@@ -50,3 +50,12 @@ end
 
 
 
+facts("Finite plane") do
+    f = FinitePlane([0., 0.], [1.,1.])
+    p = Particle([0.5, 0.], [0., 1.])
+
+    @fact collision_time(p, f) => 0.5
+
+    p = Particle([1.5, 0.], [0., 1.])
+    @fact collision_time(p, f) => -Inf
+end

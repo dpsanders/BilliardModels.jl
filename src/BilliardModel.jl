@@ -1,7 +1,8 @@
 
-export Particle, Disc, collision_time, Plane, BilliardTable, AbstractPlane, AbstractParticle
-export Sinai_billiard
-export calculate_next_collision, billiard_dynamics, initial_condition
+export Particle, Disc, collision_time,
+        Plane, FinitePlane, BilliardTable, AbstractPlane, AbstractParticle,
+        Sinai_billiard,
+        calculate_next_collision, billiard_dynamics, initial_condition
 
 # exports of lattice functionality:
 export ParticleOnLattice, CellBoundary, billiard_dynamics_on_lattice,
@@ -41,11 +42,35 @@ Disc(v::Vector, r) = Disc(Vector2D(v), r)
 abstract AbstractPlane{T} <: Obstacle{T}
 
 immutable Plane{T} <: AbstractPlane{T}
-    point_on_plane::Vector2D{T}  # an aribtrary point on the plane
+    point_on_plane::Vector2D{T}  # an arbitrary point on the plane
     normal::Vector2D{T}
 end
 
 Plane(v1::Vector, v2::Vector) = Plane(Vector2D(v1), Vector2D(v2))
+
+make_perpendicular_vector{T}(v::Vector2D{T}) = Vector2D(v[2], -v[1])
+
+immutable FinitePlane{T} <: AbstractPlane{T}
+    point_on_plane::Vector2D{T}  # an arbitrary point on the plane
+    normal::Vector2D{T}
+    start_pos::Vector2D{T}  # where the finite piece starts and ends
+    end_pos::Vector2D{T}
+    director::Vector2D{T}  # vector pointing along
+end
+
+function FinitePlane(start_pos::Vector, end_pos::Vector)
+
+    end_pos = Vector2D(end_pos)
+    start_pos = Vector2D(start_pos)
+
+    disp = end_pos - start_pos
+
+    normal_vec = normalize(make_perpendicular_vector(disp))
+
+    director = disp / normsq(disp)
+
+    FinitePlane(start_pos, normal_vec, start_pos, end_pos, director)
+end
 
 @doc """A `CellBoundary` is a boundary between neighbouring cells on a lattice.
         It is assumed to be planar.  The constructor creates an incomplete
@@ -121,6 +146,21 @@ collision_time{T}(p::AbstractParticle{T}, plane::AbstractPlane{T}) =
     dot(plane.point_on_plane - p.x, plane.normal) / dot(p.v, plane.normal)
 
 normal(plane::AbstractPlane, x) = plane.normal  # same normal vector for all positions x on plane
+
+function collision_time{T}(p::AbstractParticle{T}, plane::FinitePlane{T})
+    t_collision = dot(plane.point_on_plane - p.x, plane.normal) / dot(p.v, plane.normal)
+    new_pos = p.x + t_collision*p.v
+
+    distance = (new_pos - plane.start_pos) ⋅ plane.director
+
+    if zero(T) ≤ distance ≤ one(T)   # if distance between 0 and 1 then current point lies on plane
+        t_collision
+    else
+        -convert(T, Inf)
+    end
+
+end
+
 
 @doc """Convention: the normal points towards the allowed part of the billiard table""" ->
 isoutside(x, plane::AbstractPlane) = dot(x - plane.point_on_plane, plane.normal) > 0.0
