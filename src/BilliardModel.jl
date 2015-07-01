@@ -73,7 +73,7 @@ function FinitePlane(start_pos::Vector, end_pos::Vector)
 end
 
 
-const non_existent_plane = Plane([-Inf, -Inf], [0., 0.])
+const fake_plane = Plane([-Inf, -Inf], [0., 0.])
 
 
 @doc """A `CellBoundary` is a boundary between neighbouring cells on a lattice.
@@ -360,7 +360,7 @@ function billiard_dynamics_on_lattice{T}(p::ParticleOnLattice{T}, table::Billiar
     xs = [p.x]
     lattice_vectors = [p.lattice_vector]
 
-    which_obstacle_hit = non_existent_plane
+    which_obstacle_hit = fake_plane
     # which_obstacle_hit = nothing
 
     free_path_length = 0.0
@@ -472,12 +472,17 @@ function continuous_time(xs, lattice_vectors, free_paths, delta_t)
 end
 
 
-"Step a particle for time delta_t"
-function step!(particle::Particle{T}, last_obstacle_hit::Obstacle{T}, delta_t::FloatingPoint)
+"""Step a particle for time delta_t.
+This assumes continuous time, so last_obstacle_hit is not relevant at start and end of the trajectory
+(there is measure zero to be exactly on an obstacle).
+"""
+function step!(particle::Particle{T}, , delta_t::FloatingPoint)
 	t = 0.0  # amount of time in current step
 
+    last_obstacle_hit::Obstacle{T} = fake_plane
+
 	while t < delta_t
-		x_collision, v_new, first_collision_time, which_obstacle_hit = calculate_next_collision(particle, table, last_obstacle_hit)
+		x_collision, v_new, first_collision_time, last_obstacle_hit = calculate_next_collision(particle, table, last_obstacle_hit)
 		if t + first_collision_time > delta_t
 			break
 		end
@@ -485,11 +490,10 @@ function step!(particle::Particle{T}, last_obstacle_hit::Obstacle{T}, delta_t::F
 		particle.x = x_collision
 		particle.v = v_new
 		t += first_collision_time
-		last_obstacle_hit = which_obstacle_hit
 
 	end
 	particle.x += particle.v * (delta_t - t)
 
-    particle, non_existent_plane::Obstacle{T}  # with probability 1, we are not on an obstacle at the end of the time step
+    particle
 
 end
