@@ -476,7 +476,7 @@ end
 This assumes continuous time, so last_obstacle_hit is not relevant at start and end of the trajectory
 (there is measure zero to be exactly on an obstacle).
 """
-function step!(particle::Particle{T}, , delta_t::FloatingPoint)
+function step!(particle::Particle{T}, table::BilliardTable{T}, delta_t::FloatingPoint)
 	t = 0.0  # amount of time in current step
 
     last_obstacle_hit::Obstacle{T} = fake_plane
