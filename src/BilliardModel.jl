@@ -2,7 +2,7 @@
 export Particle, Disc, collision_time,
         Plane, FinitePlane, BilliardTable, AbstractPlane, AbstractParticle,
         Sinai_billiard,
-        calculate_next_collision, billiard_dynamics, initial_condition
+        calculate_next_collision, billiard_dynamics, initial_condition, step!
 
 # exports of lattice functionality:
 export ParticleOnLattice, CellBoundary, billiard_dynamics_on_lattice,
