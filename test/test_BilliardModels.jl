@@ -37,13 +37,16 @@ facts("Billiard table tests") do
     table = Sinai_billiard(0.1)
     p = Particle([0.2, 0.], [1., 0.])
 
-    next_collision = calculate_next_collision(p, table, nothing)
+    fake_plane = Plane([-Inf, -Inf], [0., 0.])
+
+
+    next_collision = calculate_next_collision(p, table, fake_plane)
     @fact next_collision[2] => Vector2D(-1., 0.)  # new velocity after reflecting on vertical boundary
     @fact next_collision[3] => 0.3  # col]\
 
 
     p = Particle([0.2, 0.], [-1., 0.])
-    next_collision = calculate_next_collision(p, table, nothing)
+    next_collision = calculate_next_collision(p, table, fake_plane)
     @fact isa(next_collision[4], Disc) => true
 
 end
