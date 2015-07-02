@@ -215,7 +215,7 @@ function calculate_next_collision_on_lattice{T}(p::ParticleOnLattice{T},
 end
 
 
-function calculate_next_collision(p::Particle{T}, billiard_table::BilliardTable{T}, previous_obstacle_hit::Obstacle{T})
+function calculate_next_collision{T}(p::Particle{T}, billiard_table::BilliardTable{T}, previous_obstacle_hit::Obstacle{T})
     obstacles = billiard_table.obstacles
 
     first_collision_time = Inf
@@ -476,14 +476,16 @@ end
 This assumes continuous time, so last_obstacle_hit is not relevant at start and end of the trajectory
 (there is measure zero to be exactly on an obstacle).
 """
-function step!(particle::Particle{T}, table::BilliardTable{T}, delta_t::FloatingPoint)
+function step!{T}(particle::Particle{T}, table::BilliardTable{T}, delta_t::FloatingPoint)
 	t = 0.0  # amount of time in current step
 
     last_obstacle_hit::Obstacle{T} = fake_plane
 
 	while t < delta_t
-		x_collision, v_new, first_collision_time, last_obstacle_hit = calculate_next_collision(particle, table, last_obstacle_hit)
-		if t + first_collision_time > delta_t
+
+        x_collision, v_new, first_collision_time, last_obstacle_hit = calculate_next_collision(particle, table, last_obstacle_hit)
+
+        if t + first_collision_time > delta_t
 			break
 		end
 
